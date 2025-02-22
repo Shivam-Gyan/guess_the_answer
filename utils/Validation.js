@@ -20,7 +20,7 @@ const Validation={
         if (!hasSpecialChar) errors.push("Password must contain at least one special character (!@#$%^&*...).");
 
         if (errors.length > 0) {
-            return { valid: false, errors };
+            return {errors };
         }
 
         return 0;

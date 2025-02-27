@@ -6,6 +6,8 @@ import userRouter from './routes/user.route.js';
 import fileUpload from 'express-fileupload'
 import cloudinary from 'cloudinary';
 import cors from 'cors'
+import quizRouter from './routes/quiz.route.js';
+import questionRouter from './routes/question.route.js';
 
 
 const server=express();
@@ -29,6 +31,8 @@ server.get('/',(req,res)=>{
 })
 
 server.use('/api/user',userRouter)
+server.use('/api/quiz',quizRouter)
+server.use('/api/question',questionRouter)
 
 server.listen(port,()=>{
     console.log("server connected to port "+port)

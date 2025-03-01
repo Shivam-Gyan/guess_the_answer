@@ -2,6 +2,53 @@ import mongoose from "mongoose";
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
+
+const quizAttemptedSchema=new mongoose.Schema({
+    quizAttemptedId: {
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"quiz"
+    },
+    quizAttemptedAt:{
+        type:Date,
+        default:new Date()
+    },
+    pointEarned:{
+        type:Number,
+        default:0
+    },
+    timeTaken:{
+        type:Number,
+        default:0
+    }
+})
+
+const quizCreatedSchema=new mongoose.Schema({
+    quizCreatedId:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"quiz"
+    },
+    quizCreatedAt:{
+        type:Date,
+        default:new Date()
+    }
+})
+
+const roomCreatedSchema=new mongoose.Schema({
+        roomId:{
+            type:String,
+        },
+        max_participants:{
+            type:Number,
+            default:0
+        },
+        participants:[
+            {
+                type:mongoose.Schema.Types.ObjectId,
+                ref:"users"
+            }
+        ]
+})
+
 const userSchema=new mongoose.Schema({
     userId:{
         type:String,
@@ -21,6 +68,10 @@ const userSchema=new mongoose.Schema({
         unique: true,
         lowercase: true,
     },
+    isEmailVerified:{
+        type:Boolean,
+        default:false
+    },
     password: {
         type: String,
         required: true,
@@ -31,23 +82,33 @@ const userSchema=new mongoose.Schema({
     },
     user_type:{
         type:String,
-        enum:["Student","Teacher","personal"]
+        enum:["User","Admin"],
+        default:"User",
+        required:true
     },
+    quizAttempted:[quizAttemptedSchema],
+    quizCreated:[quizCreatedSchema],
     friends:[
         {
             type:mongoose.Schema.Types.ObjectId,
             ref:"users"
         }
     ],
-    points:{
+    pointsEarned:{
         type:Number,
         default:0
     },
-    createdAt:{
+    roomCreated:[roomCreatedSchema],
+    otp:{
+        type:String,
+        default:null
+    },
+    otpExpires:{
         type:Date,
-        default:new Date()
+        default:null
     }
-})
+    
+},{timestamps:true})
 
 
 userSchema.statics.hashPassword = async function (password) {

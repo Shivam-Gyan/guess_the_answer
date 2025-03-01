@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 // Define the Quiz Schema
 const quizSchema = new mongoose.Schema({
     // Unique quiz ID
-    // quiz_id: {
+    // quizId: {
     //     type: String,
     //     required: true,
     //     unique: true

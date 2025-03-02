@@ -1,37 +1,9 @@
 import userModel from '../models/user.models.js'
 import Validation from '../utils/Validation.js'
 import userServices from '../database/services/user.services.js'
-import cloudinary from 'cloudinary'
 import mailerUtils from '../utils/Mailer.util.js'
 
 const userController = {
-
-    UplaodCloudinary: async (req, res) => {
-
-        if (!req.files || Object.keys(req.files).length == 0) {
-            return next(new ErrorHandler("Please uplaod and image", 404));
-        }
-        const { image } = req.files;
-        let cloudinaryResponse;
-
-        try {
-            cloudinaryResponse = await cloudinary.uploader.upload(
-                image.tempFilePath
-            );
-        } catch (error) {
-            return res.status(500).json({
-                message: error.message,
-                success: false
-            })
-        }
-
-
-        return res.status(200).json({
-            success: true,
-            message: "upload successfull",
-            image_url: cloudinaryResponse.secure_url
-        })
-    },
 
     register: async (req, res) => {
 
@@ -234,8 +206,8 @@ const userController = {
 
     verifyEmail: async (req, res) => {
 
+        const { email } = req.body;
         try {
-            const { email } = req.body;
             const user = await userServices.getByEmail(email);
 
             if (!user) {

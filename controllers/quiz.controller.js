@@ -1,6 +1,7 @@
 import quizServices from "../database/services/quiz.services.js";
 
 const quizController = {
+
   createQuiz: async (req, res) => {
     const { title, description = "", type } = req.body;
 
@@ -19,6 +20,9 @@ const quizController = {
         questions: [],
       });
 
+      // call the  create question controller
+
+      // save quiz
       console.log("quiz saved in mongo")
       return res.status(201).json({
         message: "Quiz created successfully",

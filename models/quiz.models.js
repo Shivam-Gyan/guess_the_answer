@@ -3,33 +3,45 @@ import mongoose from "mongoose";
 // Define the Quiz Schema
 const quizSchema = new mongoose.Schema({
     // Unique quiz ID
-    // quizId: {
-    //     type: String,
-    //     required: true,
-    //     unique: true
-    // },
-    // Gk,Science or coding related
-    quiz_type: {
+    quizId: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
-    // Quiz title
+    // Gk,Science or coding related
+    quizTags: [
+        {
+            type: String,
+        }
+    ],
     title: {
         type: String,
         required: true
     },
     description: { type: String }, // Quiz description
-    // instruction: { type: String }, // Instructions for the quiz
+
+    // instruction is array of lines of instruction
+    // instruction: [
+    //     { 
+    //         type: String 
+    //     }
+    // ], // Instructions for the quiz
     questions: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Question"
-    }], // Array of Questions
-    rating: { type: Number, default: 0 }, // Quiz rating
+    }], 
+    rating: { 
+        type: Number, 
+        default: 0 
+    }, 
     user_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     },
+    quizBanner:{
+        type: String
+    }
     
-}, { timestamps: true }); // Adds createdAt & updatedAt fields automatically
+}, { timestamps: true });
 
 export default mongoose.model("Quiz", quizSchema);

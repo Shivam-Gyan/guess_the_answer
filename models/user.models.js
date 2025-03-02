@@ -34,6 +34,10 @@ const quizCreatedSchema=new mongoose.Schema({
 })
 
 const roomCreatedSchema=new mongoose.Schema({
+        roomCreatedBy:{
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"users"
+        },
         roomId:{
             type:String,
         },
@@ -106,8 +110,16 @@ const userSchema=new mongoose.Schema({
     otpExpires:{
         type:Date,
         default:null
-    }
-    
+    },
+
+    // store quiz id for later user attempt the quiz like cart  
+    storeQiuzId:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"quiz"
+        }
+    ]
+
 },{timestamps:true})
 
 

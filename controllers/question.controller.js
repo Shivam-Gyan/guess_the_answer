@@ -2,6 +2,7 @@ import questionServices from "../database/services/question.services.js";
 import quizServices from "../database/services/quiz.services.js";
 
 const questionController = {
+  
   createQuestion: async (req, res) => {
     const { quizId } = req.params;
 

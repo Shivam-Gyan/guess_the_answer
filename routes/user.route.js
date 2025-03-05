@@ -15,6 +15,8 @@ userRouter
     .post('/resend-otp',Validation.resendOtp)
     .post('/email-verify',userController.verifyEmail)
     .get('/profile',userMiddelware.verifyToken,userController.getUserProfile)
+    .get('/forget-password/:email',userController.forgotPassword)
+    .post('/reset-password',userController.resetPassword)
 
 
 export default userRouter;

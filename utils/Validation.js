@@ -62,7 +62,7 @@ const Validation = {
         if (lastData && prevId) {
             const lastUIDNumber = parseInt(prevId.split('-').pop(), 10); // Extract numeric part
             const nextUIDNumber = lastUIDNumber + 1;
-            newID = `CC-${IdType}-${nextUIDNumber.toString().padStart(3, '0')}`;
+            newID = `GTA-${IdType}-${nextUIDNumber.toString().padStart(3, '0')}`;
         }
 
         return newID;
@@ -77,8 +77,8 @@ const Validation = {
 
     optVerify: async (req, res) => {
 
-        const { otp } = req.body;
-        const email=req.user.email; 
+        const { email,otp } = req.body;
+        // const email=req.user.email; 
         const user = await userServices.getByEmail(email);
         if (!user) {
             return res.status(404).json({
@@ -159,7 +159,8 @@ const Validation = {
         }
 
         res.status(200).json({
-            message: "OTP sent.Please check your email."
+            message: "OTP sent.Please check your email.",
+            email: email
         });
     },
 }

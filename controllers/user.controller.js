@@ -72,51 +72,33 @@ const userController = {
                 }, res);
 
                 if (emailResponse && emailResponse.status !== 'success') {
-                    return res.status(500).json({ error: "Failed to send email." })
-                } else {
-                    const welcomeEmailResponse = await mailerUtils.welcomeMailForUser({
-                        body: {
-                            receiverEmail: email,
-                            subject: 'Welcome to Guess the answer Quiz platform',
-                            userName: username,
-                        }
-                    }, res);
-
-                    if (welcomeEmailResponse && welcomeEmailResponse.status !== 'success') {
-                        return res.status(500).json({ error: 'Failed to send welcome email.' });
-                    }
+                    throw new Error('Failed to send email.');
                 }
-                delete user.password;
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'User registered successfully. Please verify your email address using the OTP sent to your email.',
-                    token: jwt_token,
-                    userData: {
-                        email: user.email,
-                        username: user.username,
-                    }
-                });
-            }
-            else {
-                const welcomeEmailResponse = await mailerUtils.welcomeMailForUser({
-                    body: {
-                        receiverEmail: email,
-                        subject: 'Welcome to Guess the answer Quiz platform',
-                        userName: username,
-                    }
-                }, res);
-
-                if (welcomeEmailResponse && welcomeEmailResponse.status !== 'success') {
-                    return res.status(500).json({ error: 'Failed to send welcome email.' });
-                }
             }
 
-            delete user.password;
+
+            const welcomeEmailResponse = await mailerUtils.welcomeMailForUser({
+                body: {
+                    receiverEmail: email,
+                    subject: 'Welcome to Guess the answer Quiz platform',
+                    userName: username,
+                }
+            }, res);
+
+            if (welcomeEmailResponse && welcomeEmailResponse.status !== 'success') {
+                throw new Error('Failed to send welcome email.');
+            }
+
             res.status(200).cookie("token", jwt_token, { httpOnly: true }).json({
-                message: "user registered successfully",
+                message: "user registered successfully.please verify your email",
                 success: true,
-                user,
+                user: {
+                    email: user.email,
+                    username: user.username,
+                    user_type: user.user_type,
+                    isEmailVerified: user.isEmailVerified
+                },
                 token: jwt_token
             })
 
@@ -138,16 +120,18 @@ const userController = {
             })
         }
 
-        const validate_password = Validation.passwordValidation(password)
-        if (validate_password.errors) {
-            return res.status(500).json({ message: validate_password.errors, success: false })
-        }
-
         const user = await userServices.getByEmail(email);
 
         if (!user) {
             return res.status(500).json({
                 message: "user not found",
+                success: false
+            })
+        }
+
+        if (user.isLocked) {
+            return res.status(500).json({
+                message: "Account locked.Connect with admin",
                 success: false
             })
         }
@@ -168,32 +152,65 @@ const userController = {
             const password_isvalid = await user.isValidPassword(password)
 
             if (!password_isvalid) {
-                return res.status(500).json({
-                    message: "incorrect email and password",
-                    success: false
+
+                if (user.passwordAttempts === 1) {
+                    user.isLocked = true;
+                    user.passwordAttempts = 0;
+                    user.previousLoginLog.push({
+                        previousLoginOn: new Date(),
+                        previousLoginIP: req.ip,
+                        previousLoginStatus: "Account Locked"
+                    })
+                    await user.save();
+                    throw new Error('Account locked. Please reset your password.');
+                }
+
+                user.passwordAttempts -= 1;
+                user.previousLoginLog.push({
+                    previousLoginOn: new Date(),
+                    previousLoginIP: req.ip,
+                    previousLoginStatus: "Wrong Password"
                 })
+                await user.save();
+
+                throw new Error(`Invalid password. ${user.passwordAttempts} attempts left.`);
+
             }
+
+            // if successfull login then store login log to successfull attempt
+            user.previousLoginLog.push({
+                previousLoginOn: new Date(),
+                previousLoginIP: req.ip,
+                previousLoginStatus: "Successful Login"
+            })
+
+            await user.save();
 
             const welcomeEmailResponse = await mailerUtils.welcomeMailForUser({
                 body: {
                     receiverEmail: email,
                     subject: 'Welcome to Guess the answer Quiz platform',
-                    userName: username,
+                    userName: user.username,
                 }
             }, res);
 
             if (welcomeEmailResponse && welcomeEmailResponse.status !== 'success') {
-                return res.status(500).json({ error: 'Failed to send welcome email.' });
+                throw new Error('Failed to send welcome email.');
             }
 
             const jwt_token = await user.generateJWT();
 
-            delete user.password;
+            // converting the mongoose user object to plain object and deleting the password field
+
+            const userObject = user.toObject();
+            delete userObject.password;
+            delete userObject.previousLoginLog;
+            delete userObject.passwordAttempts;
 
             return res.status(200).json({
                 message: "login successfully",
                 success: true,
-                user,
+                user: userObject,
                 token: jwt_token
             })
         } catch (error) {
@@ -273,6 +290,8 @@ const userController = {
                 })
             }
             delete user.password;
+            delete user.passwordAttempts;
+            delete user.previousLoginLog;
             return res.status(200).json({
                 success: true,
                 user
@@ -284,9 +303,99 @@ const userController = {
                 success: false
             })
         }
+    },
+
+    forgotPassword: async (req, res) => {
+
+        const { email } = req.params;
+
+        try {
+            const user = await userServices.getByEmail(email);
+
+            if (!user) {
+                return res.status(404).json({
+                    message: "user not found",
+                    success: false
+                })
+            }
+
+            const otpObject = Validation.generateOTP();
+            user.otp = otpObject.otp;
+            user.otpExpires = otpObject.otpExpires;
+            await user.save();
+
+            const emailResponse = await mailerUtils.otpMailForUser({
+                body: {
+                    receiverEmail: email,
+                    subject: 'Forgot Password',
+                    userName: user.username,
+                    otpType: 'forgot password',
+                    otp: otpObject.otp
+                }
+            }, res);
+
+            if (emailResponse && emailResponse.status !== 'success') {
+                throw new Error('Failed to send email.');
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "OTP sent to your email",
+                email:email
+            });
+
+        } catch (error) {
+            return res.status(500).json({
+                message: error.message,
+                success: false
+            })
+        }
+    },
+
+    resetPassword: async (req, res) => {
+
+        const { email, password, otp } = req.body;
+
+        try {
+            const user = await userServices.getByEmail(email);
+
+            if (!user) {
+                throw new Error("User not found");
+            }
+
+            if (user.otp !== otp) {
+                throw new Error("Invalid OTP");
+            }
+
+            if (user.otpExpires < new Date()) {
+               throw new Error("OTP expired");
+            }
+
+            const validate_password = Validation.passwordValidation(password)
+            if (validate_password.errors) {
+                throw new Error(validate_password.errors);
+            }
+
+            const hashed_password = await userModel.hashPassword(password);
+            user.password = hashed_password;
+            user.otp = null;
+            user.otpExpires = null;
+            await user.save();
+
+            return res.status(200).json({
+                success: true,
+                message: "Password reset successfully",
+            });
+
+        } catch (error) {
+            return res.status(500).json({
+                message: error.message,
+                success: false
+            })
+        }
+
+
     }
-
-
 }
 
 export default userController;

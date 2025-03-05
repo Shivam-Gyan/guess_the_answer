@@ -53,6 +53,20 @@ const roomCreatedSchema=new mongoose.Schema({
         ]
 })
 
+const previousLogInLogSchema = new mongoose.Schema({
+    previousLoginOn: {
+        type: Date,
+        default: Date.now // Automatically log the date when added
+    },
+    previousLoginIP: {
+        type: String,
+    },
+    previousLoginStatus: {
+        type: String,
+        enum: ["Successful Login", "Wrong Password", "Account Locked", "Password Expired"]   // Enum for login status
+    }
+});
+
 const userSchema=new mongoose.Schema({
     userId:{
         type:String,
@@ -118,7 +132,16 @@ const userSchema=new mongoose.Schema({
             type:mongoose.Schema.Types.ObjectId,
             ref:"quiz"
         }
-    ]
+    ],
+    isLocked:{
+        type:Boolean,
+        default:false
+    },
+    passwordAttempts:{
+        type:Number,
+        default:5
+    },
+    previousLoginLog:[previousLogInLogSchema]
 
 },{timestamps:true})
 

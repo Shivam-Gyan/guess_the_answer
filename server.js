@@ -19,10 +19,12 @@ cloudinary.v2.config({
     api_secret:process.env.CLOUDINARY_API_SECRET
 })
 
-server.use(bodyParser.json())
+server.use(express.json())
 server.use(fileUpload({
     useTempFiles:true,
 }))
+
+
 server.use(cors());
 
 

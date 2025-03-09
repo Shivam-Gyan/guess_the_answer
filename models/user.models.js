@@ -36,21 +36,38 @@ const quizCreatedSchema=new mongoose.Schema({
 const roomCreatedSchema=new mongoose.Schema({
         roomCreatedBy:{
             type:mongoose.Schema.Types.ObjectId,
-            ref:"users"
+            ref:"users",
+            required:true
+        },
+        roomName:{
+            type:String,
+            required:true
         },
         roomId:{
+            type:String,
+            required:true
+        },
+        roomPassword:{
+            type:String,
+            required:true
+        },
+        roomUrl:{
             type:String,
         },
         max_participants:{
             type:Number,
-            default:0
+            default:8
         },
         participants:[
             {
                 type:mongoose.Schema.Types.ObjectId,
                 ref:"users"
             }
-        ]
+        ],
+        createdAt:{
+            type:Date,
+            default:new Date()
+        }
 })
 
 const previousLogInLogSchema = new mongoose.Schema({

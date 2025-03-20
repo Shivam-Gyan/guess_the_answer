@@ -3,15 +3,14 @@ import Validation from '../utils/Validation.js'
 import userServices from '../database/services/user.services.js'
 import mailerUtils from '../utils/Mailer.util.js'
 import crypto from 'crypto'
-import { console } from 'inspector'
 
 const userController = {
 
     register: async (req, res) => {
 
-        const { username, password, email, user_type } = req.body;
+        const { name, password, email, user_type } = req.body;
 
-        if (!email || !username || !password || !user_type) {
+        if (!email || !name || !password) {
             return res.status(500).json({
                 message: "please fill the entire form",
                 success: false
@@ -26,10 +25,10 @@ const userController = {
             })
         }
 
-        const validated_username = Validation.usernameValidation(username);
-        if (validated_username.errors) {
-            return res.status(500).json({ message: validated_username.errors, success: false })
-        }
+        // const validated_username = Validation.usernameValidation(username);
+        // if (validated_username.errors) {
+        //     return res.status(500).json({ message: validated_username.errors, success: false })
+        // }
 
         const validate_password = Validation.passwordValidation(password)
         if (validate_password.errors) {
@@ -37,6 +36,8 @@ const userController = {
         }
 
         const lastData = await userServices.getLastUser();
+
+        const username=email.split('@')[0];
 
         const userId = Validation.generateId({ lastData, IdType: 'USERID' });
 
@@ -48,9 +49,11 @@ const userController = {
             const user = await userServices.addUser({
                 email,
                 password: hashed_password,
-                user_type,
+                user_type:user_type || 'User',
+                name,
                 username,
-                userId
+                userId,
+                profile_img:'https://res.cloudinary.com/dglwzejwk/image/upload/v1742380084/pngtree-irresistible-game-character-concept-for-your-creative-project-generative-ai-png-image_11919869-removebg-preview_nrbzoc.png'
             })
 
             jwt_token = await user.generateJWT();

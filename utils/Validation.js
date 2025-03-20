@@ -78,6 +78,8 @@ const Validation = {
     optVerify: async (req, res) => {
 
         const { email,otp } = req.body;
+
+        console.log(email,otp);
         // const email=req.user.email; 
         const user = await userServices.getByEmail(email);
         if (!user) {

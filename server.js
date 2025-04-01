@@ -8,9 +8,24 @@ import cloudinary from 'cloudinary';
 import cors from 'cors'
 import quizRouter from './routes/quiz.route.js';
 import questionRouter from './routes/question.route.js';
+import { createServer } from 'http';
+import { Server as SocketServer } from 'socket.io';
+import socketService from './socket/index.js';
+import roomRouter from './routes/room.route.js';
 
+const app=express();
 
-const server=express();
+const server = createServer(app);
+const io = new SocketServer(server, {
+    pingTimeout: 60000,
+    cors: {
+        origin: "*",
+        credentials: true
+    }
+});
+
+app.set('io', io);
+
 const port=process.env.PORT ||8000;
 
 cloudinary.v2.config({
@@ -19,22 +34,23 @@ cloudinary.v2.config({
     api_secret:process.env.CLOUDINARY_API_SECRET
 })
 
-server.use(express.json())
-server.use(fileUpload({
+app.use(express.json())
+app.use(fileUpload({
     useTempFiles:true,
 }))
 
+app.use(cors());
 
-server.use(cors());
-
-
-server.get('/',(req,res)=>{
+app.get('/',(req,res)=>{
     res.send("hello world")
 })
 
-server.use('/api/user',userRouter)
-server.use('/api/quiz',quizRouter)
-server.use('/api/question',questionRouter)
+app.use('/api/user',userRouter)
+app.use('/api/quiz',quizRouter)
+app.use('/api/question',questionRouter)
+app.use('/api/room', roomRouter);
+
+socketService.initializeSocketIO(io);
 
 server.listen(port,()=>{
     console.log("server connected to port "+port)

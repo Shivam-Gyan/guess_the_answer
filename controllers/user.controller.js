@@ -3,15 +3,14 @@ import Validation from '../utils/Validation.js'
 import userServices from '../database/services/user.services.js'
 import mailerUtils from '../utils/Mailer.util.js'
 import crypto from 'crypto'
-import { console } from 'inspector'
 
 const userController = {
 
     register: async (req, res) => {
 
-        const { username, password, email, user_type } = req.body;
+        const { name, password, email, user_type } = req.body;
 
-        if (!email || !username || !password || !user_type) {
+        if (!email || !name || !password) {
             return res.status(500).json({
                 message: "please fill the entire form",
                 success: false
@@ -26,10 +25,10 @@ const userController = {
             })
         }
 
-        const validated_username = Validation.usernameValidation(username);
-        if (validated_username.errors) {
-            return res.status(500).json({ message: validated_username.errors, success: false })
-        }
+        // const validated_username = Validation.usernameValidation(username);
+        // if (validated_username.errors) {
+        //     return res.status(500).json({ message: validated_username.errors, success: false })
+        // }
 
         const validate_password = Validation.passwordValidation(password)
         if (validate_password.errors) {
@@ -37,6 +36,8 @@ const userController = {
         }
 
         const lastData = await userServices.getLastUser();
+
+        const username=email.split('@')[0];
 
         const userId = Validation.generateId({ lastData, IdType: 'USERID' });
 
@@ -48,9 +49,11 @@ const userController = {
             const user = await userServices.addUser({
                 email,
                 password: hashed_password,
-                user_type,
+                user_type:user_type || 'User',
+                name,
                 username,
-                userId
+                userId,
+                profile_img:'https://res.cloudinary.com/dglwzejwk/image/upload/v1742380084/pngtree-irresistible-game-character-concept-for-your-creative-project-generative-ai-png-image_11919869-removebg-preview_nrbzoc.png'
             })
 
             jwt_token = await user.generateJWT();
@@ -228,6 +231,7 @@ const userController = {
         const { email } = req.body;
         try {
             const user = await userServices.getByEmail(email);
+            console.log(user)
 
             if (!user) {
                 return res.status(404).json({
@@ -397,103 +401,6 @@ const userController = {
         }
 
 
-    },
-
-    roomCreatedByUser: async (req, res) => {
-
-        try {
-
-            const { roomName, roomPassword,participants } = req.body;
-            const {email} = req.user;
-
-            const user = await userServices.getByEmail(email);
-
-            if (!user) {
-                throw new Error("User not found");
-            }
-
-            if(participants.length>8){
-                throw new Error("Maximum 8 participants allowed");
-            }
-
-            // generate hex of random value for url 
-            const urlHEX = crypto.randomBytes(10).toString('hex');
-
-            // room ID egenration
-            const roomId = `${roomName}$gta$${urlHEX}`
-
-            // url generation
-            const roomUrl = `${process.env.FRONTEND_URI}room/${roomId}`;
-
-            const roomData={
-                roomName,
-                roomId,
-                roomPassword,
-                participants,
-                roomUrl,
-                max_participants:8-participants.length,
-                roomCreatedBy:user._id
-            }
-
-            user.roomCreated.push(roomData);
-
-            await user.save();
-
-            return res.status(200).json({
-                message:'room created',
-                success:true,
-                roomDetails:{
-                    roomName,
-                    roomId,
-                    roomUrl,
-                    participants
-                }
-            })
-            
-        } catch (error) {
-            return res.status(500).json({
-                message: error.message,
-                success: false
-            })
-        }
-
-    },
-
-    deleteRoomCreatedByUser: async(req,res)=>{
-
-        try {
-            const {roomId}=req.params;
-
-            const {email}=req.user;
-
-            const user=await userServices.getByEmail(email)
-
-            if (!user) {
-                throw new Error("User not found");
-            }
-
-            // finding the room by roomid
-            const roomIndex = user.roomCreated.findIndex(room => room.roomId === roomId);
-
-
-            if (roomIndex === -1) {
-                throw new Error("Room not found");
-            }
-
-            user.roomCreated.splice(roomIndex, 1);
-            await user.save();
-
-            return res.status(200).json({
-                message: 'Room deleted successfully',
-                success: true
-            });
-
-        } catch (error) {
-            return res.status(500).json({
-                message:error.message,
-                success:false
-            })
-        }
     }
 }
 

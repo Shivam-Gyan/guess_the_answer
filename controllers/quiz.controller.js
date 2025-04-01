@@ -20,8 +20,6 @@ const quizController = {
         questions: [],
       });
 
-      // call the  create question controller
-
       // save quiz
       console.log("quiz saved in mongo")
       return res.status(201).json({

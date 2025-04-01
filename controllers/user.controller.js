@@ -231,6 +231,7 @@ const userController = {
         const { email } = req.body;
         try {
             const user = await userServices.getByEmail(email);
+            console.log(user)
 
             if (!user) {
                 return res.status(404).json({
@@ -400,103 +401,6 @@ const userController = {
         }
 
 
-    },
-
-    roomCreatedByUser: async (req, res) => {
-
-        try {
-
-            const { roomName, roomPassword,participants } = req.body;
-            const {email} = req.user;
-
-            const user = await userServices.getByEmail(email);
-
-            if (!user) {
-                throw new Error("User not found");
-            }
-
-            if(participants.length>8){
-                throw new Error("Maximum 8 participants allowed");
-            }
-
-            // generate hex of random value for url 
-            const urlHEX = crypto.randomBytes(10).toString('hex');
-
-            // room ID egenration
-            const roomId = `${roomName}$gta$${urlHEX}`
-
-            // url generation
-            const roomUrl = `${process.env.FRONTEND_URI}room/${roomId}`;
-
-            const roomData={
-                roomName,
-                roomId,
-                roomPassword,
-                participants,
-                roomUrl,
-                max_participants:8-participants.length,
-                roomCreatedBy:user._id
-            }
-
-            user.roomCreated.push(roomData);
-
-            await user.save();
-
-            return res.status(200).json({
-                message:'room created',
-                success:true,
-                roomDetails:{
-                    roomName,
-                    roomId,
-                    roomUrl,
-                    participants
-                }
-            })
-            
-        } catch (error) {
-            return res.status(500).json({
-                message: error.message,
-                success: false
-            })
-        }
-
-    },
-
-    deleteRoomCreatedByUser: async(req,res)=>{
-
-        try {
-            const {roomId}=req.params;
-
-            const {email}=req.user;
-
-            const user=await userServices.getByEmail(email)
-
-            if (!user) {
-                throw new Error("User not found");
-            }
-
-            // finding the room by roomid
-            const roomIndex = user.roomCreated.findIndex(room => room.roomId === roomId);
-
-
-            if (roomIndex === -1) {
-                throw new Error("Room not found");
-            }
-
-            user.roomCreated.splice(roomIndex, 1);
-            await user.save();
-
-            return res.status(200).json({
-                message: 'Room deleted successfully',
-                success: true
-            });
-
-        } catch (error) {
-            return res.status(500).json({
-                message:error.message,
-                success:false
-            })
-        }
     }
 }
 

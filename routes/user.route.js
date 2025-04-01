@@ -17,8 +17,6 @@ userRouter
     .get('/profile',userMiddelware.verifyToken,userController.getUserProfile)
     .get('/forget-password/:email',userController.forgotPassword)
     .post('/reset-password',userController.resetPassword)
-    .post('/create-room',userMiddelware.verifyToken,userController.roomCreatedByUser)
-    .get('/delete-room/:roomId',userMiddelware.verifyToken,userController.deleteRoomCreatedByUser)
 
 
 export default userRouter;

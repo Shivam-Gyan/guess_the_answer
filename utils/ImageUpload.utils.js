@@ -3,8 +3,13 @@ import cloudinary from 'cloudinary'
 
  async function UplaodCloudinary(req, res){
 
+    console.log("req", req.files)
+
     if (!req.files || Object.keys(req.files).length == 0) {
-        return next(new ErrorHandler("Please uplaod and image", 404));
+        return res.status(400).json({
+            message: "No files were uploaded.",
+            success: false
+        });
     }
     const { image } = req.files;
     let cloudinaryResponse;

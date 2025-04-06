@@ -11,5 +11,6 @@ quizRouter
   .put("/update-quiz/:id", quizController.updateQuiz)
   .delete("/delete-quiz/:id", quizController.deleteQuiz)
   .post('/quiz-banner',UplaodCloudinary)
+  .post("/addquestions", quizController.addQuestionsToQuiz)
 
 export default quizRouter;

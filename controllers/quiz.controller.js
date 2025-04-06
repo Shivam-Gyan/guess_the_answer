@@ -3,25 +3,31 @@ import quizServices from "../database/services/quiz.services.js";
 const quizController = {
 
   createQuiz: async (req, res) => {
-    const { title, description = "", type } = req.body;
 
-    if (!title || !type) {
+    const { quiz_title, quiz_description, quiz_type } = req.body;
+
+    if (!quiz_title || !quiz_type || !quiz_description) {
       return res.status(400).json({
-        message: "Title and quiz type are required fields",
+        message: "Title, Description and Type are required fields",
         success: false,
       });
     }
 
     try {
       const quiz = await quizServices.addQuiz({
-        title,
-        description,
-        quiz_type: type,
+        title:quiz_title,
+        description:quiz_description,
+        quiz_type,
         questions: [],
+        noOfQuestions:req.body.noOfQuestions,
+        quizTags: req.body.tags,
+        quizBanner:req.body.quizBanner
       });
 
-      // save quiz
-      console.log("quiz saved in mongo")
+      if (!quiz) {
+        throw new Error("Quiz creation failed");
+      }
+
       return res.status(201).json({
         message: "Quiz created successfully",
         success: true,
@@ -118,6 +124,10 @@ const quizController = {
       });
     }
   },
+
+  addQuestionsToQuiz: async (req, res) => {
+    console.log(req.body);
+  }
 };
 
 export default quizController;
